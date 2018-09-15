@@ -57,6 +57,9 @@ function PlaneObject(icao) {
         this.track_linesegs = [];
         this.history_size = 0;
 
+        // Track (direction) at the time we last appended to the track history
+        this.tail_track = null;
+
 	// When was this last updated (receiver timestamp)
         this.last_message_time = null;
         this.last_position_time = null;
@@ -196,11 +199,13 @@ PlaneObject.prototype.updateTrack = function(receiver_timestamp, last_timestamp)
                                                    head_update: this.last_position_time,
                                                    altitude: 0,
                                                    estimated: true });
+                        this.tail_track = this.track;
                         this.history_size += 2;
                 } else {
                         // Keep appending to the existing dashed line; keep every point
                         lastseg.fixed.appendCoordinate(projHere);
                         lastseg.head_update = this.last_position_time;
+                        this.tail_track = this.track;
                         this.history_size++;
                 }
 
@@ -237,18 +242,33 @@ PlaneObject.prototype.updateTrack = function(receiver_timestamp, last_timestamp)
                                            estimated: false,
                                            altitude: this.altitude,
                                            ground: (this.altitude === "ground") });
+                this.tail_track = this.track;
                 this.history_size += 3;
                 return true;
         }
         
-        // Add more data to the existing track.
-        // We only retain some historical points, at 4+ second intervals,
-        // plus the most recent point
-        if (this.last_position_time - lastseg.tail_update >  4) {
+        // Add current position to the existing track.
+        // We only retain some points depending on time elapsed and track change
+        var since_update = this.last_position_time - lastseg.tail_update;
+        var track_change = (this.tail_track && this.track) ? Math.abs(this.tail_track - this.track) : -1;
+
+        if ( since_update > 16 ||
+             (track_change > 1 && since_update > 2) ||
+             (track_change > 0.25 && since_update > 4) ||
+             (this.position_from_mlat && since_update > 4) ||
+             (track_change == -1 && since_update > 4) )
+        {
                 // enough time has elapsed; retain the last point and add a new one
-                //console.log(this.icao + " retain last point");
+                // if (this.selected) console.log("Since last update:" + since_update);
+                // Starting a curve let's append the previous point unless part of the track.
+                // Checking one part of the coordinate should suffice here.
+                if (track_change > 1 && since_update > 4 && lastseg.fixed.getLastCoordinate()[0] != projPrev[0] ) {
+                        lastseg.fixed.appendCoordinate(projPrev);
+                        this.history_size ++;
+                }
                 lastseg.fixed.appendCoordinate(projHere);
                 lastseg.tail_update = this.last_position_time;
+                this.tail_track = this.track;
                 this.history_size ++;
         }
 
