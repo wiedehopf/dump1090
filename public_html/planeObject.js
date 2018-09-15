@@ -20,6 +20,7 @@ function PlaneObject(icao) {
         this.tas            = null;
 
         this.track          = null;
+        this.old_track      = null;
         this.track_rate     = null;
         this.mag_heading    = null;
         this.true_heading   = null;
@@ -141,6 +142,9 @@ PlaneObject.prototype.updateTrack = function(receiver_timestamp, last_timestamp)
         if (this.prev_position && this.position[0] == this.prev_position[0] && this.position[1] == this.prev_position[1])
                 return false;
 
+	var track_change = (this.old_track && this.track) ? Math.abs(this.old_track - this.track) : -1;
+	this.old_track = this.track;
+
         var projHere = ol.proj.fromLonLat(this.position);
         var projPrev;
         if (this.prev_position === null) {
@@ -240,12 +244,25 @@ PlaneObject.prototype.updateTrack = function(receiver_timestamp, last_timestamp)
                 return true;
         }
         
-        // Add more data to the existing track.
-        // We only retain some historical points, at 4+ second intervals,
-        // plus the most recent point
-        if (this.last_position_time - lastseg.tail_update >= 4) {
+        // Add current position to existing track.
+        // We only retain some points depending on time elapsed and track change
+	// Most planes fly extremely straight and not updating as often for a
+	// less than 1 degree track change seems acceptable.
+        var since_update = this.last_position_time - lastseg.tail_update;
+        if ( since_update > 16 ||
+                (track_change > 1 && since_update > 2) ||
+                (track_change > 0.25 && since_update > 4) ||
+                (this.position_from_mlat && since_update > 4) ||
+                (track_change == -1 && since_update > 4) )
+        {
                 // enough time has elapsed; retain the last point and add a new one
-                //console.log(this.icao + " retain last point");
+                // if (this.selected) console.log("Since last update:" + since_update);
+                // Starting a curve let's append the previous point unless part of the track.
+                // Checking one part of the coordinate should suffice here.
+                if (track_change > 1 && lastseg.fixed.getLastCoordinate()[0] != projPrev[0] ) {
+                        lastseg.fixed.appendCoordinate(projPrev);
+                        this.history_size ++;
+                }
                 lastseg.fixed.appendCoordinate(projHere);
                 lastseg.tail_update = this.last_position_time;
                 this.history_size ++;
