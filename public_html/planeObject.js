@@ -138,7 +138,7 @@ PlaneObject.prototype.isFiltered = function() {
 PlaneObject.prototype.updateTrack = function(estimate_time) {
         if (!this.position)
                 return false;
-        if (this.position == this.prev_position)
+        if (this.prev_position && this.position[0] == this.prev_position[0] && this.position[1] == this.prev_position[1])
                 return false;
 
         var projHere = ol.proj.fromLonLat(this.position);
@@ -187,7 +187,7 @@ PlaneObject.prototype.updateTrack = function(estimate_time) {
                         this.history_size += 2;
                 } else {
                         // Keep appending to the existing dashed line; keep every point
-                        lastseg.fixed.appendCoordinate(projPrev);
+                        lastseg.fixed.appendCoordinate(projHere);
                         lastseg.head_update = this.last_position_time;
                         this.history_size++;
                 }
