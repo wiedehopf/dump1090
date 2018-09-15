@@ -242,13 +242,13 @@ PlaneObject.prototype.updateTrack = function(receiver_timestamp, last_timestamp)
         }
         
         // Add more data to the existing track.
-        // We only retain some historical points, at 5+ second intervals,
+        // We only retain some historical points, at 4+ second intervals,
         // plus the most recent point
-        if (this.last_position_time - lastseg.tail_update >= 5) {
+        if (this.last_position_time - lastseg.tail_update >  4) {
                 // enough time has elapsed; retain the last point and add a new one
                 //console.log(this.icao + " retain last point");
                 lastseg.fixed.appendCoordinate(projHere);
-                lastseg.tail_update = lastseg.head_update;
+                lastseg.tail_update = this.last_position_time;
                 this.history_size ++;
         }
 
