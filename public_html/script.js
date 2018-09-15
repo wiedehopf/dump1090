@@ -397,7 +397,7 @@ function load_history_item(i) {
         $("#loader_progress").attr('value',i);
 
         $.ajax({ url: 'data/history_' + i + '.json',
-                 timeout: 5000,
+                 timeout: PositionHistorySize * 40, // Allow 40 ms load time per history entry
                  cache: false,
                  dataType: 'json' })
 
