@@ -441,7 +441,7 @@ function end_load_history() {
                         console.log("Updating tracks at: " + now);
                         for (var i = 0; i < PlanesOrdered.length; ++i) {
                                 var plane = PlanesOrdered[i];
-                                plane.updateTrack((now - last) + 1);
+                                plane.updateTrack(now, last);
                         }
 
                         last = now;
@@ -451,7 +451,7 @@ function end_load_history() {
                 console.log("Final history cleanup pass");
                 for (var i = 0; i < PlanesOrdered.length; ++i) {
                         var plane = PlanesOrdered[i];
-                        plane.updateTick(now);
+                        plane.updateTick(now, last);
                 }
 
                 LastReceiverTimestamp = last;
