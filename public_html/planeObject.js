@@ -211,7 +211,7 @@ PlaneObject.prototype.updateTrack = function(estimate_time) {
         }
         
         if ( (lastseg.ground && this.altitude !== "ground") ||
-             (!lastseg.ground && this.altitude === "ground") || this.altitude !== lastseg.altitude ) {
+             (!lastseg.ground && this.altitude === "ground") || Math.abs(this.altitude - lastseg.altitude) >= 200 ) {
                 //console.log(this.icao + " ground state changed");
                 // Create a new segment as the ground state changed.
                 // assume the state changed halfway between the two points
