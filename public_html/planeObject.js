@@ -244,19 +244,19 @@ PlaneObject.prototype.updateTrack = function(receiver_timestamp, last_timestamp)
         if ( (lastseg.ground && this.altitude !== "ground") ||
              (!lastseg.ground && this.altitude === "ground") || Math.abs(this.altitude - lastseg.altitude) >= 200 ) {
                 //console.log(this.icao + " ground state changed");
-                // Create a new segment as the ground state changed.
-                // assume the state changed halfway between the two points
-                // FIXME needs reimplementing post-google
+                // Create a new segment as the ground state or the altitude changed.
+                // The new state is only drawn after the state has changed
+                // and we get a new position.
 
-                lastseg.fixed.appendCoordinate(projPrev);
-                this.track_linesegs.push({ fixed: new ol.geom.LineString([projPrev, projHere]),
+                lastseg.fixed.appendCoordinate(projHere);
+                this.track_linesegs.push({ fixed: new ol.geom.LineString([projHere]),
                                            feature: null,
                                            estimated: false,
                                            altitude: this.altitude,
                                            ground: (this.altitude === "ground") });
                 this.tail_update = this.last_position_time;
                 this.tail_track = this.track;
-                this.history_size += 3;
+                this.history_size += 2;
                 return true;
         }
         
