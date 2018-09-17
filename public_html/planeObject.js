@@ -57,6 +57,7 @@ function PlaneObject(icao) {
         this.elastic_feature = null;
         this.track_linesegs = [];
         this.history_size = 0;
+        this.append_time = null;
 
 	// When was this last updated (receiver timestamp)
         this.last_message_time = null;
@@ -161,13 +162,13 @@ PlaneObject.prototype.updateTrack = function(receiver_timestamp, last_timestamp)
                 //console.log(this.icao + " new track");
                 var newseg = { fixed: new ol.geom.LineString([projHere]),
                                feature: null,
-                               tail_update: this.last_position_time,
                                estimated: false,
                                ground: (this.altitude === "ground"),
                                altitude: this.altitude
                              };
                 this.track_linesegs.push(newseg);
                 this.prev_position_time = this.last_position_time;
+                this.append_time = this.last_position_time;
                 this.history_size ++;
                 return;
         }
@@ -201,10 +202,12 @@ PlaneObject.prototype.updateTrack = function(receiver_timestamp, last_timestamp)
                                                    feature: null,
                                                    altitude: 0,
                                                    estimated: true });
+                        this.append_time = this.last_position_time;
                         this.history_size += 2;
                 } else {
                         // Keep appending to the existing dashed line; keep every point
                         lastseg.fixed.appendCoordinate(projHere);
+                        this.append_time = this.last_position_time;
                         this.history_size++;
                 }
 
@@ -216,13 +219,14 @@ PlaneObject.prototype.updateTrack = function(receiver_timestamp, last_timestamp)
                 // solid lines.
                 lastseg = { fixed: new ol.geom.LineString([projPrev]),
                             feature: null,
-                            tail_update: this.last_position_time,
                             estimated: false,
                             ground: (this.altitude === "ground"),
                             altitude: this.altitude };
                 this.track_linesegs.push(lastseg);
+                this.append_time = this.prev_position_time;
+                // update append time to the previous position time
                 this.history_size ++;
-                // continue
+                // continue so the current position is appended if necessary
         }
         
         if ( (lastseg.ground && this.altitude !== "ground") ||
@@ -235,10 +239,10 @@ PlaneObject.prototype.updateTrack = function(receiver_timestamp, last_timestamp)
                 lastseg.fixed.appendCoordinate(projPrev);
                 this.track_linesegs.push({ fixed: new ol.geom.LineString([projPrev, projHere]),
                                            feature: null,
-                                           tail_update: this.last_position_time,
                                            estimated: false,
                                            altitude: this.altitude,
                                            ground: (this.altitude === "ground") });
+                this.append_time = this.last_position_time;
                 this.history_size += 3;
                 return true;
         }
@@ -247,7 +251,7 @@ PlaneObject.prototype.updateTrack = function(receiver_timestamp, last_timestamp)
         // We only retain some points depending on time elapsed and track change
 	// Most planes fly extremely straight and not updating as often for a
 	// less than 1 degree track change seems acceptable.
-        var since_update = this.last_position_time - lastseg.tail_update;
+        var since_update = this.last_position_time - this.append_time;
         if ( since_update > 16 ||
                 (track_change > 1 && since_update > 2) ||
                 (track_change > 0.25 && since_update > 4) ||
@@ -263,7 +267,7 @@ PlaneObject.prototype.updateTrack = function(receiver_timestamp, last_timestamp)
                         this.history_size ++;
                 }
                 lastseg.fixed.appendCoordinate(projHere);
-                lastseg.tail_update = this.last_position_time;
+                this.append_time = this.last_position_time;
                 this.history_size ++;
         }
 
