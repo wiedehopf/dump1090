@@ -197,7 +197,10 @@ PlaneObject.prototype.updateTrack = function(receiver_timestamp, last_timestamp)
                         // >5s gap in data, create a new estimated segment
                         //console.log(this.icao + " switching to estimated");
 
-                        lastseg.fixed.appendCoordinate(projPrev);
+                        if (lastseg.fixed.getLastCoordinate()[0] != projPrev[0]) {
+                                lastseg.fixed.appendCoordinate(projPrev);
+                                this.history_size ++;
+                        }
                         this.track_linesegs.push({ fixed: new ol.geom.LineString([projPrev, projHere]),
                                                    feature: null,
                                                    altitude: 0,
