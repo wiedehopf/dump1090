@@ -61,6 +61,7 @@ function PlaneObject(icao) {
 	// When was this last updated (receiver timestamp)
         this.last_message_time = null;
         this.last_position_time = null;
+        this.prev_position_time = null;
 
         // When was this last updated (seconds before last update)
         this.seen = null;
@@ -160,13 +161,13 @@ PlaneObject.prototype.updateTrack = function(receiver_timestamp, last_timestamp)
                 //console.log(this.icao + " new track");
                 var newseg = { fixed: new ol.geom.LineString([projHere]),
                                feature: null,
-                               head_update: this.last_position_time,
                                tail_update: this.last_position_time,
                                estimated: false,
                                ground: (this.altitude === "ground"),
                                altitude: this.altitude
                              };
                 this.track_linesegs.push(newseg);
+                this.prev_position_time = this.last_position_time;
                 this.history_size ++;
                 return;
         }
@@ -178,7 +179,7 @@ PlaneObject.prototype.updateTrack = function(receiver_timestamp, last_timestamp)
         // MLAT data are given some more leeway
 
         var stale_timeout = (this.position_from_mlat ? 30 : 5);
-        var time_difference = (this.last_position_time - lastseg.head_update) - (receiver_timestamp - last_timestamp);
+        var time_difference = (this.last_position_time - this.prev_position_time) - (receiver_timestamp - last_timestamp);
         var est_track = (time_difference > stale_timeout);
 
         // Also check if the position was already stale when it was exported by dump1090
@@ -186,6 +187,7 @@ PlaneObject.prototype.updateTrack = function(receiver_timestamp, last_timestamp)
 
         est_track = est_track || ((receiver_timestamp - this.last_position_time) > stale_timeout);
 
+        this.prev_position_time = this.last_position_time;
         var ground_track = (this.altitude === "ground");
         
         if (est_track) {
@@ -193,17 +195,16 @@ PlaneObject.prototype.updateTrack = function(receiver_timestamp, last_timestamp)
                 if (!lastseg.estimated) {
                         // >5s gap in data, create a new estimated segment
                         //console.log(this.icao + " switching to estimated");
+
                         lastseg.fixed.appendCoordinate(projPrev);
                         this.track_linesegs.push({ fixed: new ol.geom.LineString([projPrev, projHere]),
                                                    feature: null,
-                                                   head_update: this.last_position_time,
                                                    altitude: 0,
                                                    estimated: true });
                         this.history_size += 2;
                 } else {
                         // Keep appending to the existing dashed line; keep every point
                         lastseg.fixed.appendCoordinate(projHere);
-                        lastseg.head_update = this.last_position_time;
                         this.history_size++;
                 }
 
@@ -215,7 +216,6 @@ PlaneObject.prototype.updateTrack = function(receiver_timestamp, last_timestamp)
                 // solid lines.
                 lastseg = { fixed: new ol.geom.LineString([projPrev]),
                             feature: null,
-                            head_update: this.last_position_time,
                             tail_update: this.last_position_time,
                             estimated: false,
                             ground: (this.altitude === "ground"),
@@ -235,7 +235,6 @@ PlaneObject.prototype.updateTrack = function(receiver_timestamp, last_timestamp)
                 lastseg.fixed.appendCoordinate(projPrev);
                 this.track_linesegs.push({ fixed: new ol.geom.LineString([projPrev, projHere]),
                                            feature: null,
-                                           head_update: this.last_position_time,
                                            tail_update: this.last_position_time,
                                            estimated: false,
                                            altitude: this.altitude,
@@ -268,7 +267,6 @@ PlaneObject.prototype.updateTrack = function(receiver_timestamp, last_timestamp)
                 this.history_size ++;
         }
 
-        lastseg.head_update = this.last_position_time;
         return true;
 };
 
