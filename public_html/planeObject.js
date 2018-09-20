@@ -57,6 +57,11 @@ function PlaneObject(icao) {
         this.track_linesegs = [];
         this.history_size = 0;
 
+        // Time the previous position was received
+        // (when the head of the elastic line segment was last updated)
+        // used for detecting a stale position and switching to estimated track
+        this.head_update = null;
+
         // Track (direction) at the time we last appended to the track history
         this.tail_track = null;
 
@@ -159,13 +164,13 @@ PlaneObject.prototype.updateTrack = function(receiver_timestamp, last_timestamp)
                 //console.log(this.icao + " new track");
                 var newseg = { fixed: new ol.geom.LineString([projHere]),
                                feature: null,
-                               head_update: this.last_position_time,
                                tail_update: this.last_position_time,
                                estimated: false,
                                ground: (this.altitude === "ground"),
                                altitude: this.altitude
                              };
                 this.track_linesegs.push(newseg);
+                this.head_update = this.last_position_time;
                 this.history_size ++;
                 return;
         }
@@ -175,7 +180,7 @@ PlaneObject.prototype.updateTrack = function(receiver_timestamp, last_timestamp)
         // Determine if track data are intermittent/stale
         // Time difference between two position updates should not be much
         // greater than the difference between data inputs
-        var time_difference = (this.last_position_time - lastseg.head_update) - (receiver_timestamp - last_timestamp);
+        var time_difference = (this.last_position_time - this.head_update) - (receiver_timestamp - last_timestamp);
 
         // MLAT data are given some more leeway
         var stale_timeout = (this.position_from_mlat ? 30 : 5);
@@ -185,6 +190,9 @@ PlaneObject.prototype.updateTrack = function(receiver_timestamp, last_timestamp)
         // Makes stale check more accurate for example for 30s spaced history points
 
         est_track = est_track || ((receiver_timestamp - this.last_position_time) > stale_timeout);
+
+        // head_update is not used in the rest of the function, set it for the next call of this function
+        this.head_update = this.last_position_time;
 
         var ground_track = (this.altitude === "ground");
         
@@ -196,7 +204,6 @@ PlaneObject.prototype.updateTrack = function(receiver_timestamp, last_timestamp)
                         lastseg.fixed.appendCoordinate(projPrev);
                         this.track_linesegs.push({ fixed: new ol.geom.LineString([projPrev, projHere]),
                                                    feature: null,
-                                                   head_update: this.last_position_time,
                                                    altitude: 0,
                                                    estimated: true });
                         this.tail_track = this.track;
@@ -204,7 +211,6 @@ PlaneObject.prototype.updateTrack = function(receiver_timestamp, last_timestamp)
                 } else {
                         // Keep appending to the existing dashed line; keep every point
                         lastseg.fixed.appendCoordinate(projHere);
-                        lastseg.head_update = this.last_position_time;
                         this.tail_track = this.track;
                         this.history_size++;
                 }
@@ -217,7 +223,6 @@ PlaneObject.prototype.updateTrack = function(receiver_timestamp, last_timestamp)
                 // solid lines.
                 lastseg = { fixed: new ol.geom.LineString([projPrev]),
                             feature: null,
-                            head_update: this.last_position_time,
                             tail_update: this.last_position_time,
                             estimated: false,
                             ground: (this.altitude === "ground"),
@@ -237,7 +242,6 @@ PlaneObject.prototype.updateTrack = function(receiver_timestamp, last_timestamp)
                 lastseg.fixed.appendCoordinate(projPrev);
                 this.track_linesegs.push({ fixed: new ol.geom.LineString([projPrev, projHere]),
                                            feature: null,
-                                           head_update: this.last_position_time,
                                            tail_update: this.last_position_time,
                                            estimated: false,
                                            altitude: this.altitude,
