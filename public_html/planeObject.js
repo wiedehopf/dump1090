@@ -62,6 +62,11 @@ function PlaneObject(icao) {
         // used for detecting a stale position and switching to estimated track
         this.head_update = null;
 
+        // Time when the tail of the elastic line segment was last updated
+        // When extending the existing track,
+        // tail_update is set to the timestamp of the appended point
+        this.tail_update = null;
+
         // Track (direction) at the time we last appended to the track history
         this.tail_track = null;
 
@@ -164,13 +169,13 @@ PlaneObject.prototype.updateTrack = function(receiver_timestamp, last_timestamp)
                 //console.log(this.icao + " new track");
                 var newseg = { fixed: new ol.geom.LineString([projHere]),
                                feature: null,
-                               tail_update: this.last_position_time,
                                estimated: false,
                                ground: (this.altitude === "ground"),
                                altitude: this.altitude
                              };
                 this.track_linesegs.push(newseg);
                 this.head_update = this.last_position_time;
+                this.tail_update = this.last_position_time;
                 this.history_size ++;
                 return;
         }
@@ -206,11 +211,13 @@ PlaneObject.prototype.updateTrack = function(receiver_timestamp, last_timestamp)
                                                    feature: null,
                                                    altitude: 0,
                                                    estimated: true });
+                        this.tail_update = this.last_position_time;
                         this.tail_track = this.track;
                         this.history_size += 2;
                 } else {
                         // Keep appending to the existing dashed line; keep every point
                         lastseg.fixed.appendCoordinate(projHere);
+                        this.tail_update = this.last_position_time;
                         this.tail_track = this.track;
                         this.history_size++;
                 }
@@ -223,13 +230,15 @@ PlaneObject.prototype.updateTrack = function(receiver_timestamp, last_timestamp)
                 // solid lines.
                 lastseg = { fixed: new ol.geom.LineString([projPrev]),
                             feature: null,
-                            tail_update: this.last_position_time,
                             estimated: false,
                             ground: (this.altitude === "ground"),
                             altitude: this.altitude };
                 this.track_linesegs.push(lastseg);
                 this.history_size ++;
                 // continue
+                // tail_update and tail_track don't need to be updated here
+                // as the previous point is already part of the estimated track
+                // and both were updated when the previous point was appended
         }
         
         if ( (lastseg.ground && this.altitude !== "ground") ||
@@ -242,10 +251,10 @@ PlaneObject.prototype.updateTrack = function(receiver_timestamp, last_timestamp)
                 lastseg.fixed.appendCoordinate(projPrev);
                 this.track_linesegs.push({ fixed: new ol.geom.LineString([projPrev, projHere]),
                                            feature: null,
-                                           tail_update: this.last_position_time,
                                            estimated: false,
                                            altitude: this.altitude,
                                            ground: (this.altitude === "ground") });
+                this.tail_update = this.last_position_time;
                 this.tail_track = this.track;
                 this.history_size += 3;
                 return true;
@@ -253,7 +262,7 @@ PlaneObject.prototype.updateTrack = function(receiver_timestamp, last_timestamp)
         
         // Add current position to the existing track.
         // We only retain some points depending on time elapsed and track change
-        var since_update = this.last_position_time - lastseg.tail_update;
+        var since_update = this.last_position_time - this.tail_update;
         var track_change = (this.tail_track && this.track) ? Math.abs(this.tail_track - this.track) : -1;
 
         if ( since_update > 16 ||
@@ -271,7 +280,7 @@ PlaneObject.prototype.updateTrack = function(receiver_timestamp, last_timestamp)
                         this.history_size ++;
                 }
                 lastseg.fixed.appendCoordinate(projHere);
-                lastseg.tail_update = this.last_position_time;
+                this.tail_update = this.last_position_time;
                 this.tail_track = this.track;
                 this.history_size ++;
         }
