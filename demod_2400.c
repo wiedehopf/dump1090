@@ -359,7 +359,7 @@ void demodulate2400(struct mag_buf *mag)
         //  where the preamble of the second message clobbered the last
         //  few bits of the first message, but the message bits didn't
         //  overlap)
-        j += msglen*12/5;
+        j += 8*12/5;
 
         // Pass data to the next layer
         useModesMessage(&mm);

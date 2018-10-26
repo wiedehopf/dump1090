@@ -1280,7 +1280,7 @@ char *generateAircraftJson(const char *url_path, int *len) {
     _messageNow = now;
 
     p = safe_snprintf(p, end,
-                       "{ \"now\" : %.1f,\n"
+                       "{ \"now\" : %.3f,\n"
                        "  \"messages\" : %u,\n"
                        "  \"aircraft\" : [",
                        now / 1000.0,
