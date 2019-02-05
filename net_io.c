@@ -1280,7 +1280,7 @@ char *generateAircraftJson(const char *url_path, int *len) {
     _messageNow = now;
 
     p = safe_snprintf(p, end,
-                       "{ \"now\" : %.1f,\n"
+                       "{ \"now\" : %.3f,\n"
                        "  \"messages\" : %u,\n"
                        "  \"aircraft\" : [",
                        now / 1000.0,
@@ -1303,14 +1303,14 @@ char *generateAircraftJson(const char *url_path, int *len) {
             p = safe_snprintf(p, end, ",\"type\":\"%s\"", addrtype_enum_string(a->addrtype));
         if (trackDataValid(&a->callsign_valid))
             p = safe_snprintf(p, end, ",\"flight\":\"%s\"", jsonEscapeString(a->callsign));
-        if (trackDataValid(&a->airground_valid) && a->airground_valid.source >= SOURCE_MODE_S_CHECKED && a->airground == AG_GROUND)
-            p = safe_snprintf(p, end, ",\"alt_baro\":\"ground\"");
-        else {
+        //if (trackDataValid(&a->airground_valid) && a->airground_valid.source >= SOURCE_MODE_S_CHECKED && a->airground == AG_GROUND)
+            //p = safe_snprintf(p, end, ",\"alt_baro\":\"ground\"");
+        //else {
             if (trackDataValid(&a->altitude_baro_valid))
                 p = safe_snprintf(p, end, ",\"alt_baro\":%d", a->altitude_baro);
             if (trackDataValid(&a->altitude_geom_valid))
                 p = safe_snprintf(p, end, ",\"alt_geom\":%d", a->altitude_geom);
-        }
+        //}
         if (trackDataValid(&a->gs_valid))
             p = safe_snprintf(p, end, ",\"gs\":%.1f", a->gs);
         if (trackDataValid(&a->ias_valid))
@@ -1521,7 +1521,7 @@ char *generateStatsJson(const char *url_path, int *len) {
     p = appendStatsJson(p, end, &Modes.stats_current, "latest");
     p = safe_snprintf(p, end, ",\n");
 
-    p = appendStatsJson(p, end, &Modes.stats_1min[Modes.stats_latest_1min], "last1min");
+    p = appendStatsJson(p, end, &Modes.stats_1min, "last1min");
     p = safe_snprintf(p, end, ",\n");
 
     p = appendStatsJson(p, end, &Modes.stats_5min, "last5min");

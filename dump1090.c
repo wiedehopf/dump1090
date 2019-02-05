@@ -396,21 +396,25 @@ void backgroundTasks(void) {
         int i;
 
         if (next_stats_update == 0) {
-            next_stats_update = now + 60000;
+            next_stats_update = now + 20000;
         } else {
-            Modes.stats_latest_1min = (Modes.stats_latest_1min + 1) % 15;
-            Modes.stats_1min[Modes.stats_latest_1min] = Modes.stats_current;
+            Modes.stats_latest_5sec = (Modes.stats_latest_5sec + 1) % 300;
+            Modes.stats_5sec[Modes.stats_latest_5sec] = Modes.stats_current;
 
             add_stats(&Modes.stats_current, &Modes.stats_alltime, &Modes.stats_alltime);
             add_stats(&Modes.stats_current, &Modes.stats_periodic, &Modes.stats_periodic);
 
+            reset_stats(&Modes.stats_1min);
+            for (i = 0; i < 20; ++i)
+                add_stats(&Modes.stats_5sec[(Modes.stats_latest_5sec - i + 300) % 300], &Modes.stats_1min, &Modes.stats_1min);
+
             reset_stats(&Modes.stats_5min);
-            for (i = 0; i < 5; ++i)
-                add_stats(&Modes.stats_1min[(Modes.stats_latest_1min - i + 15) % 15], &Modes.stats_5min, &Modes.stats_5min);
+            for (i = 0; i < 100; ++i)
+                add_stats(&Modes.stats_5sec[(Modes.stats_latest_5sec - i + 300) % 300], &Modes.stats_5min, &Modes.stats_5min);
 
             reset_stats(&Modes.stats_15min);
-            for (i = 0; i < 15; ++i)
-                add_stats(&Modes.stats_1min[i], &Modes.stats_15min, &Modes.stats_15min);
+            for (i = 0; i < 300; ++i)
+                add_stats(&Modes.stats_5sec[i], &Modes.stats_15min, &Modes.stats_15min);
 
             reset_stats(&Modes.stats_current);
             Modes.stats_current.start = Modes.stats_current.end = now;
@@ -418,7 +422,7 @@ void backgroundTasks(void) {
             if (Modes.json_dir)
                 writeJsonToFile("stats.json", generateStatsJson);
 
-            next_stats_update += 60000;
+            next_stats_update += 5000;
         }
     }
 
@@ -663,12 +667,12 @@ int main(int argc, char **argv) {
         Modes.stats_5min.start = Modes.stats_5min.end =
         Modes.stats_15min.start = Modes.stats_15min.end = mstime();
 
-    for (j = 0; j < 15; ++j)
-        Modes.stats_1min[j].start = Modes.stats_1min[j].end = Modes.stats_current.start;
+    for (j = 0; j < 300; ++j)
+        Modes.stats_5sec[j].start = Modes.stats_5sec[j].end = Modes.stats_current.start;
 
     // write initial json files so they're not missing
     writeJsonToFile("receiver.json", generateReceiverJson);
-    writeJsonToFile("stats.json", generateStatsJson);
+    //writeJsonToFile("stats.json", generateStatsJson);
     writeJsonToFile("aircraft.json", generateAircraftJson);
 
     interactiveInit();

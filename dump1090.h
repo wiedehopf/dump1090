@@ -387,8 +387,9 @@ struct {                             // Internal state
     struct stats stats_current;
     struct stats stats_alltime;
     struct stats stats_periodic;
-    struct stats stats_1min[15];
-    int stats_latest_1min;
+    struct stats stats_5sec[300];
+    int stats_latest_5sec;
+    struct stats stats_1min;
     struct stats stats_5min;
     struct stats stats_15min;
 } Modes;
