@@ -459,6 +459,10 @@ void backgroundTasks(void) {
             snprintf(filebuf, PATH_MAX, "history_%d.json", Modes.json_aircraft_history_next);
             writeJsonToFile(filebuf, generateHistoryJson);
         }
+        if (Modes.json_aircraft_history_next != Modes.json_history_size-1) {
+            free(Modes.json_aircraft_history[Modes.json_aircraft_history_next].content); // might be NULL, that's OK.
+            Modes.json_aircraft_history[Modes.json_aircraft_history_next].content=NULL;
+        }
 
         Modes.json_aircraft_history_next = (Modes.json_aircraft_history_next+1) % Modes.json_history_size;
 
