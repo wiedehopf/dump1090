@@ -227,6 +227,10 @@ typedef enum {
     EMERGENCY_RESERVED = 7
 } emergency_t;
 
+typedef enum {
+    NAV_ALT_INVALID, NAV_ALT_UNKNOWN, NAV_ALT_AIRCRAFT, NAV_ALT_MCP, NAV_ALT_FMS
+} nav_altitude_source_t;
+
 #define MODES_NON_ICAO_ADDRESS       (1<<24) // Set on addresses to indicate they are not ICAO addresses
 
 #define MODES_DEBUG_DEMOD (1<<0)
@@ -309,7 +313,7 @@ struct {                             // Internal state
     double          sample_rate;                          // actual sample rate in use (in hz)
 
     uint16_t       *log10lut;        // Magnitude -> log10 lookup table
-    int             exit;            // Exit from the main loop when true
+    int             exit;            // Exit from the main loop when true (2 = unclean exit)
 
     // Sample conversion
     int            dc_filter;        // should we apply a DC filter?
@@ -586,7 +590,7 @@ struct modesMessage {
         unsigned mcp_altitude;  // MCP/FCU selected altitude
         float    qnh;           // altimeter setting (QFE or QNH/QNE), millibars
 
-        enum { NAV_ALT_INVALID, NAV_ALT_UNKNOWN, NAV_ALT_AIRCRAFT, NAV_ALT_MCP, NAV_ALT_FMS } altitude_source;
+        nav_altitude_source_t altitude_source;
 
         nav_modes_t modes;
     } nav;
