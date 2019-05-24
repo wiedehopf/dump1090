@@ -49,6 +49,7 @@
 
 
 #include "dump1090.h"
+#include "ais_charset.h"
 
 /* for PRIX64 */
 #include <inttypes.h>
@@ -382,8 +383,6 @@ int scoreModesMessage(unsigned char *msg, int validbits)
 
 static void decodeExtendedSquitter(struct modesMessage *mm);
 
-char ais_charset[64] = "@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_ !\"#$%&'()*+,-./0123456789:;<=>?";
-
 // return 0 if all OK
 //   -1: message might be valid, but we couldn't validate the CRC against a known ICAO
 //   -2: bad message or unrepairable CRC error
@@ -568,9 +567,9 @@ int decodeModesMessage(struct modesMessage *mm, unsigned char *msg)
         mm->CC = getbit(msg, 7);
     }
 
-    // CF (Control field)
+    // CF (Control field, see Figure 2-2 ADS-B Message BaselineFormat Structure)
     if (mm->msgtype == 18) {
-        mm->CF = getbits(msg, 5, 8);
+        mm->CF = getbits(msg, 6, 8);
     }
 
     // DR (Downlink Request)
@@ -1570,6 +1569,8 @@ static const char *commb_format_to_string(commb_format_t format) {
     switch (format) {
     case COMMB_EMPTY_RESPONSE:
         return "empty response";
+    case COMMB_AMBIGUOUS:
+        return "ambiguous format";
     case COMMB_DATALINK_CAPS:
         return "BDS1,0 Datalink capabilities";
     case COMMB_GICB_CAPS:

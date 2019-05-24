@@ -1,3 +1,18 @@
+dump1090-fa (3.7.1) stable; urgency=medium
+
+  * dump1090: TSV buffer overflow fix/increase max TSV packet size
+  * dump1090: Fix incorrect mode_s bit number usage
+  * dump1090: Rework use of pkg-config to work around librtlsdr packaging bugs
+    in Ubuntu distro
+  * dump1090: Minimal polyfill to support building older bladeRF libs
+  * dump1090: Add COMMB_AMBIGUOUS enum type for Comm-B messages we're unsure of
+  * dump1090: Comm-b message decoding updates
+  * dump1090: Require more fields to be populated in BDS5,0/BDS6,0 before accepting
+  * dump1090: Update aircraft DB to 20190502
+  * dump1090: Doc/README updates
+
+ -- Eric Tran <eric.tran@flightaware.com>  Fri, 03 May 2019 12:35:00 -6000
+
 dump1090-fa (3.7.0.1) stable; urgency=medium
 
   * dump1090: Fix piaware lat/lon variable

@@ -196,6 +196,7 @@ typedef enum {
 
 typedef enum {
     COMMB_UNKNOWN,
+    COMMB_AMBIGUOUS,
     COMMB_EMPTY_RESPONSE,
     COMMB_DATALINK_CAPS,
     COMMB_GICB_CAPS,
