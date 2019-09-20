@@ -400,7 +400,7 @@ function load_history_item(i) {
         $("#loader_progress").attr('value',i);
 
         $.ajax({ url: 'data/history_' + i + '.json',
-                 timeout: PositionHistorySize * 40, // Allow 40 ms load time per history entry
+                 timeout: 5000,
                  cache: false,
                  dataType: 'json' })
 
@@ -454,7 +454,7 @@ function end_load_history() {
                 console.log("Final history cleanup pass");
                 for (var i = 0; i < PlanesOrdered.length; ++i) {
                         var plane = PlanesOrdered[i];
-                        plane.updateTick(now, last);
+                        plane.updateTick(now);
                 }
 
                 LastReceiverTimestamp = last;
@@ -1896,11 +1896,11 @@ function updatePiAwareOrFlightFeeder() {
 	if (isFlightFeeder) {
 		$('.piAwareLogo').hide();
 		$('.flightfeederLogo').show();
-		PageName = 'FlightFeeder Skyview';
+		PageName = 'FlightFeeder SkyAware';
 	} else {
 		$('.flightfeederLogo').hide();
 		$('.piAwareLogo').show();
-		PageName = 'PiAware Skyview';
+		PageName = 'PiAware SkyAware';
 	}
 	refreshPageTitle();
 }
