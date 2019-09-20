@@ -1280,7 +1280,10 @@ static void decodeESOperationalStatus(struct modesMessage *mm, int check_imf)
                 mm->accuracy.nic_baro_valid = 1;
                 mm->accuracy.nic_baro = getbit(me, 53);
             } else {
-                mm->opstatus.tah = getbit(me, 53) ? HEADING_GROUND_TRACK : mm->opstatus.hrd;
+                // see DO=260B §2.2.3.2.7.2.12
+                // TAH=0 : surface movement reports ground track
+                // TAH=1 : surface movement reports aircraft heading
+                mm->opstatus.tah = getbit(me, 53) ? mm->opstatus.hrd : HEADING_GROUND_TRACK;
             }
             break;
 
@@ -1330,7 +1333,10 @@ static void decodeESOperationalStatus(struct modesMessage *mm, int check_imf)
                 mm->accuracy.nic_baro_valid = 1;
                 mm->accuracy.nic_baro = getbit(me, 53);
             } else {
-                mm->opstatus.tah = getbit(me, 53) ? HEADING_GROUND_TRACK : mm->opstatus.hrd;
+                // see DO=260B §2.2.3.2.7.2.12
+                // TAH=0 : surface movement reports ground track
+                // TAH=1 : surface movement reports aircraft heading
+                mm->opstatus.tah = getbit(me, 53) ? mm->opstatus.hrd : HEADING_GROUND_TRACK;
             }
             break;
         }

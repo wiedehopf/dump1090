@@ -23,8 +23,12 @@
 #include <libbladeRF.h>
 #include <inttypes.h>
 
+#if !defined(LIBBLADERF_API_VERSION) || (LIBBLADERF_API_VERSION < 0x01060100)
+#error This libbladeRF is too old, upgrade or disable bladerf support
+#endif
+
 // Polyfill for the older bladerf API
-#if defined(LIBBLADERF_API_VERSION) && (LIBBLADERF_API_VERSION < 0x02000000)
+#if LIBBLADERF_API_VERSION < 0x02000000
 typedef unsigned int bladerf_frequency;
 #endif
 

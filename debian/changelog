@@ -1,3 +1,19 @@
+dump1090-fa (3.7.2) stable; urgency=medium
+
+  * dump1090: Fix reversed sense of Track Angle/Heading bit in surface opstatus messages
+  * dump1090: Have filter-regs emit a special value "-COMPUTED-" for filtered data
+    values, rather than blanking them out entirely
+  * Fix registration side mappings with a non-zero offset
+  * dump1090: Update aircraft DB to 20190816
+  * dump1090: Reject outright libbladerf that's too old
+  * dump1090: Trigger build after bladeRF build; turn off build durability; turn
+    off concurrent builds
+  * SkyAware: SkyAware Renaming
+  * SkyAware: Fix some display errors for ground vehicles
+  * SkyAware: Fix aircraft trail handling
+
+ -- Eric Tran <eric.tran@flightaware.com>  Mon, 09 Sep 2019 09:25:00 -6000
+
 dump1090-fa (3.7.1) stable; urgency=medium
 
   * dump1090: TSV buffer overflow fix/increase max TSV packet size
