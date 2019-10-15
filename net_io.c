@@ -1317,14 +1317,14 @@ char *generateAircraftJson(const char *url_path, int *len) {
             p = safe_snprintf(p, end, ",\"type\":\"%s\"", addrtype_enum_string(a->addrtype));
         if (trackDataValid(&a->callsign_valid))
             p = safe_snprintf(p, end, ",\"flight\":\"%s\"", jsonEscapeString(a->callsign));
-        //if (trackDataValid(&a->airground_valid) && a->airground_valid.source >= SOURCE_MODE_S_CHECKED && a->airground == AG_GROUND)
-            //p = safe_snprintf(p, end, ",\"alt_baro\":\"ground\"");
-        //else {
+        if (trackDataValid(&a->airground_valid) && a->airground_valid.source >= SOURCE_MODE_S_CHECKED && a->airground == AG_GROUND)
+            p = safe_snprintf(p, end, ",\"alt_baro\":\"ground\"");
+        else {
             if (trackDataValid(&a->altitude_baro_valid))
                 p = safe_snprintf(p, end, ",\"alt_baro\":%d", a->altitude_baro);
             if (trackDataValid(&a->altitude_geom_valid))
                 p = safe_snprintf(p, end, ",\"alt_geom\":%d", a->altitude_geom);
-        //}
+        }
         if (trackDataValid(&a->gs_valid))
             p = safe_snprintf(p, end, ",\"gs\":%.1f", a->gs);
         if (trackDataValid(&a->ias_valid))
