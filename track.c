@@ -424,7 +424,7 @@ static int doLocalCPR(struct aircraft *a, struct modesMessage *mm, double *lat, 
             *rc = a->pos_rc;
 
         range_limit = 50e3;
-    } else if (!surface && (Modes.bUserFlags & MODES_USER_LATLON_VALID)) {
+    } else if (0 && !surface && (Modes.bUserFlags & MODES_USER_LATLON_VALID)) {
         reflat = Modes.fUserLat;
         reflon = Modes.fUserLon;
 
