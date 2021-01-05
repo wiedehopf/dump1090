@@ -172,6 +172,52 @@ static inline __attribute__((always_inline)) uint8_t slice_byte(uint16_t **pPtr,
     return theByte;
 }
 
+// score a phase using data from the magnitude buffers
+// if the score is better than the existing one passed via bestscore,
+// update bestmsg, bestscore and bestphase
+static void score_phase(int try_phase, uint16_t *m, int j, unsigned char **bestmsg, int *bestscore, int *bestphase, unsigned char **msg, unsigned char *msg1, unsigned char *msg2) {
+    uint16_t *pPtr;
+    int phase, i, score, bytelen;
+
+    pPtr = &m[j + 19] + (try_phase / 5);
+    phase = try_phase % 5;
+
+    (*msg)[0] = slice_byte(&pPtr, &phase);
+
+    switch ((*msg)[0] >> 3) {
+        case 0: case 4: case 5: case 11:
+            bytelen = MODES_SHORT_MSG_BYTES;
+            break;
+
+        case 16: case 17: case 18: case 20: case 21: case 24:
+            bytelen = MODES_LONG_MSG_BYTES;
+            break;
+
+        default:
+            bytelen = 1; // unknown DF, give up immediately
+            break;
+    }
+
+    for (i = 1; i < bytelen; ++i) {
+        (*msg)[i] = slice_byte(&pPtr, &phase);
+    }
+
+    // Score the mode S message and see if it's any good.
+    score = scoreModesMessage(*msg, i*8);
+    if (score > *bestscore) {
+        // new high score!
+        *bestmsg = *msg;
+        *bestscore = score;
+        *bestphase = try_phase;
+
+        // swap to using the other buffer so we don't clobber our demodulated data
+        // (if we find a better result then we'll swap back, but that's OK because
+        // we no longer need this copy if we found a better one)
+        *msg = (*msg == msg1) ? msg2 : msg1;
+    }
+}
+
+
 //
 // Given 'mlen' magnitude samples in 'm', sampled at 2.4MHz,
 // try to demodulate some Mode S messages.
@@ -286,44 +332,7 @@ void demodulate2400(struct mag_buf *mag)
         Modes.stats_current.demod_preambles++;
         bestmsg = NULL; bestscore = -2; bestphase = -1;
         for (try_phase = 4; try_phase <= 8; ++try_phase) {
-            uint16_t *pPtr;
-            int phase, i, score, bytelen;
-
-            pPtr = &m[j+19] + (try_phase/5);
-            phase = try_phase % 5;
-
-            bytelen = MODES_LONG_MSG_BYTES;
-            for (i = 0; i < bytelen; ++i) {
-
-                msg[i] = slice_byte(&pPtr, &phase);
-                if (i == 0) {
-                    switch (msg[0] >> 3) {
-                    case 0: case 4: case 5: case 11:
-                        bytelen = MODES_SHORT_MSG_BYTES; break;
-
-                    case 16: case 17: case 18: case 20: case 21: case 24:
-                        break;
-
-                    default:
-                        bytelen = 1; // unknown DF, give up immediately
-                        break;
-                    }
-                }
-            }
-
-            // Score the mode S message and see if it's any good.
-            score = scoreModesMessage(msg, i*8);
-            if (score > bestscore) {
-                // new high score!
-                bestmsg = msg;
-                bestscore = score;
-                bestphase = try_phase;
-
-                // swap to using the other buffer so we don't clobber our demodulated data
-                // (if we find a better result then we'll swap back, but that's OK because
-                // we no longer need this copy if we found a better one)
-                msg = (msg == msg1) ? msg2 : msg1;
-            }
+            score_phase(try_phase, m, j, &bestmsg, &bestscore, &bestphase, &msg, msg1, msg2);
         }
 
         // Do we have a candidate?
